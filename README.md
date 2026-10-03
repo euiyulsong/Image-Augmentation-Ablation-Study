@@ -1,364 +1,339 @@
-# Image Augmentation Ablation Study
+# Image Augmentation Ablation 결과
 
-This repository contains a controlled ablation study on the effect of image augmentation during image-classification training.
+## 1. 실험 설정
 
-The experiment compares three training regimes:
+- Dataset: **CIFAR-10**
+- Epochs: **10**
+- Batch size: **128**
+- Seed: **42**
+- 비교 모델:
+  - CNN
+  - ViT
+  - VLM
+- 학습 regime:
+  - `original_only`: 원본 이미지만 사용
+  - `augmented_only`: augmentation 적용 이미지 사용
+  - `mixed`: 원본 + augmentation 혼합
+- Robustness 평가:
+  - Rotation
+  - Occlusion
+  - Low contrast
+  - Dark
 
-- **Original Only**: train only on the original images
-- **Augmented Only**: train using augmented samples
-- **Mixed**: train using both original and augmented samples
-
-The main goal is to measure how these strategies affect:
-
-1. Clean-image accuracy
-2. Robustness to rotation
-3. Robustness to occlusion
-4. Robustness to low contrast
-5. Robustness to dark images
-
----
-
-## Experimental Setup
-
-| Setting | Value |
-|---|---|
-| Dataset | CIFAR-10 |
-| Model | Vision Transformer (ViT) |
-| Epochs | 10 |
-| Batch size | 128 |
-| Seed | 42 |
-| Training regimes | Original Only / Augmented Only / Mixed |
-
-Experiment command:
-
-```bash
-python3 augmentation_ablation.py \
-  --model vit \
-  --epochs 10 \
-  --batch-size 128 \
-  --seeds 42
-```
+현재 실험은 seed 42 하나만 실행되어 STD는 계산되지 않았다.
 
 ---
 
-## Training Regimes
+## 2. CNN 결과
 
-### Original Only
-
-The model is trained only on the original training images.
-
-This serves as the baseline and measures how well a standard training setup generalizes to corrupted or transformed test images.
-
-### Augmented Only
-
-Training samples are passed through the augmentation pipeline.
-
-The goal is to increase invariance to image transformations and improve robustness to distribution shifts.
-
-### Mixed
-
-The model is trained using a mixture of original and augmented images.
-
-This setting attempts to preserve the original data distribution while also exposing the model to transformed samples.
-
----
-
-# Results
-
-## Overall Results
-
-| Training regime | Clean | Rotation | Occlusion | Low Contrast | Dark | Robust Avg ↑ | Robust Drop ↓ |
+| Training | Clean | Rotation | Occlusion | Low Contrast | Dark | Robust Avg | Robust Drop |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Original Only | 97.66% | 91.87% | 89.14% | 97.20% | 97.22% | 93.86% | 3.80 pp |
-| Augmented Only | 98.32% | 93.29% | 89.81% | 97.95% | 98.08% | 94.78% | 3.54 pp |
-| **Mixed** | **98.44%** | **93.83%** | **90.74%** | **98.05%** | **98.09%** | **95.18%** | **3.26 pp** |
+| Original only | 95.65% | 83.85% | 68.65% | 92.58% | 94.04% | 84.78% | 10.87%p |
+| **Augmented only** | **96.36%** | **90.36%** | **87.17%** | **95.21%** | **95.69%** | **92.11%** | **4.25%p** |
+| Mixed | 96.28% | 89.71% | 85.98% | 94.79% | 95.55% | 91.51% | 4.77%p |
 
-`Robust Avg` is the average performance across:
+### Augmentation 효과
 
-- Rotation
-- Occlusion
-- Low contrast
-- Dark
+`original_only → augmented_only`
 
-`Robust Drop` is:
+| Metric | 변화 |
+|---|---:|
+| Clean | **+0.71%p** |
+| Rotation | **+6.51%p** |
+| Occlusion | **+18.52%p** |
+| Low contrast | **+2.63%p** |
+| Dark | **+1.65%p** |
+| Robust Avg | **+7.33%p** |
+| Robust Drop | **10.87 → 4.25%p** |
 
-```text
-Clean Accuracy - Robust Average
-```
-
-Lower is better.
-
----
-
-## Improvement over Original-Only Training
-
-| Metric | Original Only | Mixed | Improvement |
-|---|---:|---:|---:|
-| Clean | 97.66% | **98.44%** | **+0.78 pp** |
-| Rotation | 91.87% | **93.83%** | **+1.96 pp** |
-| Occlusion | 89.14% | **90.74%** | **+1.60 pp** |
-| Low Contrast | 97.20% | **98.05%** | **+0.85 pp** |
-| Dark | 97.22% | **98.09%** | **+0.87 pp** |
-| Robust Average | 93.86% | **95.18%** | **+1.32 pp** |
-| Robust Drop | 3.80 pp | **3.26 pp** | **-0.54 pp** |
-
-The largest gains are observed under **rotation** and **occlusion**, which are also the most difficult perturbations in this experiment.
+CNN에서는 augmentation 효과가 매우 뚜렷하다. 특히 **occlusion에서 +18.52%p**, rotation에서 **+6.51%p** 개선되어 augmentation이 단순 clean accuracy뿐 아니라 robustness 향상에도 큰 효과를 보였다.
 
 ---
 
-# Key Findings
+## 3. ViT 결과
 
-## 1. Mixed training achieves the best overall performance
+| Training | Clean | Rotation | Occlusion | Low Contrast | Dark | Robust Avg | Robust Drop |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Original only | 97.66% | 91.87% | 89.14% | 97.20% | 97.22% | 93.86% | 3.80%p |
+| Augmented only | 98.32% | 93.29% | 89.81% | 97.95% | 98.08% | 94.78% | 3.54%p |
+| **Mixed** | **98.44%** | **93.83%** | **90.74%** | **98.05%** | **98.09%** | **95.18%** | **3.26%p** |
 
-The mixed training regime achieves the highest score on **every evaluated condition**:
+### Augmentation 효과
+
+`original_only → augmented_only`
+
+| Metric | 변화 |
+|---|---:|
+| Clean | **+0.66%p** |
+| Rotation | **+1.42%p** |
+| Occlusion | **+0.67%p** |
+| Low contrast | **+0.75%p** |
+| Dark | **+0.86%p** |
+| Robust Avg | **+0.92%p** |
+| Robust Drop | **3.80 → 3.54%p** |
+
+ViT에서도 augmentation이 모든 평가 항목에서 성능을 개선했다.
+
+특히 이번 ViT 실험에서는 `augmented_only`보다 **`mixed`가 모든 metric에서 가장 높은 성능**을 기록했다.
+
+`original_only → mixed` 기준으로 보면:
+
+| Metric | 변화 |
+|---|---:|
+| Clean | **+0.78%p** |
+| Rotation | **+1.96%p** |
+| Occlusion | **+1.60%p** |
+| Low contrast | **+0.85%p** |
+| Dark | **+0.87%p** |
+| Robust Avg | **+1.32%p** |
+| Robust Drop | **3.80 → 3.26%p** |
+
+즉 ViT에서는 원본 데이터와 augmentation 데이터를 함께 사용하는 전략이 clean accuracy와 robustness 모두에서 가장 좋은 결과를 보였다.
+
+---
+
+## 4. VLM 결과
+
+| Training | Clean | Rotation | Occlusion | Low Contrast | Dark | Robust Avg | Robust Drop |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Original only | 97.58% | 88.64% | 90.93% | 96.91% | 96.87% | 93.34% | 4.24%p |
+| **Augmented only** | **98.02%** | **90.93%** | **91.64%** | 96.96% | **97.33%** | **94.22%** | **3.80%p** |
+| Mixed | 97.97% | 90.58% | 91.18% | **97.16%** | 97.29% | 94.05% | 3.92%p |
+
+### Augmentation 효과
+
+`original_only → augmented_only`
+
+- Clean: **+0.44%p**
+- Rotation: **+2.29%p**
+- Occlusion: **+0.71%p**
+- Robust Avg: **+0.88%p**
+- Robust Drop: **4.24 → 3.80%p**
+
+VLM에서도 augmentation이 소폭의 clean 성능 상승과 robustness 개선을 만들었다.
+
+---
+
+# 5. 모델 간 비교
+
+Augmented-only 기준:
+
+| Model | Clean | Rotation | Occlusion | Robust Avg |
+|---|---:|---:|---:|---:|
+| CNN | 96.36% | 90.36% | 87.17% | 92.11% |
+| **ViT** | **98.32%** | **93.29%** | 89.81% | **94.78%** |
+| VLM | 98.02% | 90.93% | **91.64%** | 94.22% |
+
+Augmented-only 기준으로 ViT는 **Clean, Rotation, Robust Avg**에서 가장 높은 성능을 기록했고, VLM은 **Occlusion**에서 가장 높은 성능을 보였다.
+
+Augmentation을 사용하지 않은 `original_only`의 Robust Avg는 다음과 같다.
 
 ```text
-Clean          : 98.44%
-Rotation       : 93.83%
-Occlusion      : 90.74%
-Low Contrast   : 98.05%
-Dark           : 98.09%
-Robust Average : 95.18%
+CNN : 84.78%
+ViT : 93.86%
+VLM : 93.34%
 ```
 
-Compared with original-only training, the robust average improves from:
+ViT와 VLM은 augmentation 없이도 CNN보다 높은 corruption robustness를 보였다.
+
+CNN은 augmentation 적용 후 Robust Avg가 **84.78% → 92.11%**로 크게 증가하면서 격차를 상당 부분 줄였다.
+
+ViT의 경우 augmented-only보다 mixed가 더 높은 결과를 기록했다.
 
 ```text
-93.86% → 95.18%
-```
+ViT Robust Avg
 
-an absolute improvement of approximately:
-
-```text
-+1.32 percentage points
+Original   : 93.86%
+Augmented  : 94.78%
+Mixed      : 95.18%
 ```
 
 ---
 
-## 2. Augmentation does not hurt clean accuracy in this experiment
+# 6. 주요 결론
 
-A common concern is that aggressive augmentation may improve robustness at the cost of in-distribution accuracy.
+### 1. Image augmentation은 모든 모델에서 clean accuracy를 유지하거나 개선했다
 
-That trade-off was not observed here.
+이번 실험에서는 augmentation을 적용한 학습이 세 모델 모두에서 clean accuracy를 떨어뜨리지 않았다.
 
 ```text
-Original Only : 97.66%
-Augmented Only: 98.32%
-Mixed         : 98.44%
+CNN
+95.65 → 96.36 (+0.71%p)
+
+ViT
+97.66 → 98.32 (+0.66%p)
+
+VLM
+97.58 → 98.02 (+0.44%p)
 ```
 
-Both augmentation regimes outperform the original-only baseline on clean CIFAR-10 test images.
-
-The mixed regime gives the highest clean accuracy.
+따라서 현재 실험에서는 augmentation으로 인한 clean performance degradation은 관찰되지 않았다.
 
 ---
 
-## 3. Rotation benefits the most from augmentation
+### 2. CNN에서 augmentation 효과가 가장 크다
 
-Rotation accuracy improves substantially:
-
-```text
-Original Only : 91.87%
-Augmented Only: 93.29%
-Mixed         : 93.83%
-```
-
-Mixed training improves rotation robustness by:
+CNN Robust Avg:
 
 ```text
-+1.96 percentage points
+Original   84.78%
+Mixed      91.51%
+Augmented  92.11%
 ```
 
-relative to the original-only model.
+특히 occlusion:
 
-This is the largest absolute improvement among the tested perturbations.
+```text
+68.65% → 87.17%
+         +18.52%p
+```
+
+Rotation 역시:
+
+```text
+83.85% → 90.36%
+         +6.51%p
+```
+
+CNN에서는 augmentation이 corruption robustness 확보에 매우 크게 작용했다.
 
 ---
 
-## 4. Occlusion remains the hardest perturbation
+### 3. ViT에서도 augmentation이 모든 robustness metric을 개선했다
 
-All models perform substantially worse under occlusion:
+ViT Robust Avg:
 
 ```text
-Original Only : 89.14%
-Augmented Only: 89.81%
-Mixed         : 90.74%
+Original   : 93.86%
+Augmented  : 94.78%
+Mixed      : 95.18%
 ```
 
-Although mixed training improves the result by **+1.60 pp**, occlusion remains the lowest-performing condition.
+`original_only → augmented_only`에서는 Robust Avg가 **+0.92%p** 증가했고, `original_only → mixed`에서는 **+1.32%p** 증가했다.
 
-This suggests that partial information loss is harder for the classifier to handle than moderate appearance changes such as brightness or contrast shifts.
+Rotation에서도:
+
+```text
+Original   : 91.87%
+Augmented  : 93.29%
+Mixed      : 93.83%
+```
+
+Occlusion에서도:
+
+```text
+Original   : 89.14%
+Augmented  : 89.81%
+Mixed      : 90.74%
+```
+
+augmentation에 따른 일관된 개선이 관찰되었다.
+
+다만 CNN의 Robust Avg 개선 폭인 **+7.33%p**와 비교하면 ViT의 augmentation 효과는 상대적으로 작다. 이는 ViT의 baseline robustness 자체가 이미 높은 것과 관련이 있을 수 있다.
 
 ---
 
-## 5. Low contrast and darkness have relatively small effects
+### 4. ViT에서는 Mixed가 가장 좋은 결과를 보였다
 
-The models remain highly accurate under low-contrast and dark-image conditions.
-
-For mixed training:
+기존 결과와 달리 새 ViT 실험에서는 `mixed`가 `augmented_only`보다 모든 metric에서 높았다.
 
 ```text
-Clean        : 98.44%
-Low Contrast : 98.05%
-Dark         : 98.09%
+                  Augmented   Mixed
+Clean               98.32     98.44
+Rotation            93.29     93.83
+Occlusion           89.81     90.74
+Low Contrast        97.95     98.05
+Dark                98.08     98.09
+Robust Avg          94.78     95.18
+Robust Drop          3.54      3.26
 ```
 
-The degradation relative to clean accuracy is small compared with rotation or occlusion.
+따라서 ViT에서는 **원본과 augmented sample을 함께 사용하는 mixed training이 가장 좋은 결과**를 보였다.
 
-This indicates that the trained ViT is relatively robust to the tested photometric perturbations.
+반면 CNN과 VLM에서는 augmented-only가 mixed보다 소폭 높았다.
+
+```text
+CNN Robust Avg
+Augmented : 92.11
+Mixed     : 91.51
+
+VLM Robust Avg
+Augmented : 94.22
+Mixed     : 94.05
+
+ViT Robust Avg
+Augmented : 94.78
+Mixed     : 95.18
+```
+
+즉 augmentation regime의 최적 선택은 모델 architecture에 따라 달라질 가능성이 있다.
+
+다만 현재는 seed가 하나뿐이기 때문에 작은 차이에 대한 일반적인 우열을 확정하기는 어렵다.
 
 ---
 
-## 6. Mixed training produces the smallest robustness gap
+# 7. 중요한 실험상 주의점
 
-Robust drop:
+## 현재 모든 실험은 seed 하나만 사용함
 
-```text
-Original Only : 3.80 pp
-Augmented Only: 3.54 pp
-Mixed         : 3.26 pp
-```
+현재 실험은 모두 **seed=42 하나만 실행**되었기 때문에 STD가 `NaN`이다.
 
-Therefore, mixed training reduces the difference between clean and corrupted-image performance.
-
-Compared with the original-only baseline:
+특히 ViT에서:
 
 ```text
-3.80 pp → 3.26 pp
+Augmented Robust Avg : 94.78%
+Mixed Robust Avg     : 95.18%
+Difference           : +0.40%p
 ```
 
-which corresponds to a reduction of:
+처럼 작은 차이는 random seed에 따라 순서가 달라질 수 있다.
 
-```text
-0.54 percentage points
-```
+따라서 보다 신뢰할 수 있는 비교를 위해서는 최소 3개 이상의 seed를 사용하는 것이 적절하다.
 
-in the clean-to-robustness gap.
-
----
-
-# Training Curves
-
-## Original Only
-
-| Epoch | Train Loss | Train Accuracy | Validation Accuracy |
-|---:|---:|---:|---:|
-| 1 | 0.3455 | 91.84% | 97.08% |
-| 2 | 0.0573 | 98.45% | 97.56% |
-| 3 | 0.0223 | 99.50% | 97.28% |
-| 4 | 0.0090 | 99.87% | 97.26% |
-| 5 | 0.0042 | 99.97% | 97.80% |
-| 6 | 0.0025 | 99.98% | 97.86% |
-| 7 | 0.0017 | 99.99% | **97.88%** |
-| 8 | 0.0013 | 99.99% | 97.86% |
-| 9 | 0.0011 | 100.00% | 97.84% |
-| 10 | 0.0011 | 100.00% | 97.82% |
-
-The original-only model reaches almost perfect training accuracy, while validation accuracy saturates around 97.8%.
-
----
-
-## Augmented Only
-
-| Epoch | Train Loss | Train Accuracy | Validation Accuracy |
-|---:|---:|---:|---:|
-| 1 | 0.4057 | 89.69% | 96.80% |
-| 2 | 0.1072 | 96.69% | 97.50% |
-| 3 | 0.0752 | 97.66% | 97.68% |
-| 4 | 0.0554 | 98.24% | 97.94% |
-| 5 | 0.0442 | 98.53% | 97.96% |
-| 6 | 0.0353 | 98.96% | 98.16% |
-| 7 | 0.0285 | 99.10% | **98.34%** |
-| 8 | 0.0236 | 99.32% | **98.34%** |
-| 9 | 0.0217 | 99.38% | 98.28% |
-| 10 | 0.0199 | 99.48% | **98.34%** |
-
-Augmentation makes the training task harder, resulting in higher training loss and lower training accuracy than original-only training, while validation performance improves.
-
----
-
-## Mixed
-
-| Epoch | Train Loss | Train Accuracy | Validation Accuracy |
-|---:|---:|---:|---:|
-| 1 | 0.3803 | 90.63% | 97.18% |
-| 2 | 0.0890 | 97.31% | 97.48% |
-| 3 | 0.0580 | 98.27% | 97.76% |
-| 4 | 0.0428 | 98.71% | 98.16% |
-| 5 | 0.0310 | 99.12% | 98.02% |
-| 6 | 0.0235 | 99.32% | 98.10% |
-| 7 | 0.0213 | 99.40% | 97.98% |
-| 8 | 0.0179 | 99.50% | **98.40%** |
-| 9 | 0.0160 | 99.56% | 98.28% |
-| 10 | 0.0149 | 99.58% | 98.28% |
-
-The mixed regime reaches the highest observed validation accuracy of **98.40%**.
-
----
-
-# Summary
-
-The experiment gives the following ordering:
-
-```text
-Mixed > Augmented Only > Original Only
-```
-
-for both clean accuracy and average robustness.
-
-The most important result is:
-
-```text
-                    Clean       Robust Avg
-Original Only       97.66%        93.86%
-Augmented Only      98.32%        94.78%
-Mixed               98.44%        95.18%
-```
-
-Under this experimental configuration, combining original and augmented examples gives the best balance between clean accuracy and robustness.
-
-The improvement is especially visible for geometric or information-removing perturbations:
-
-```text
-Rotation:
-91.87% → 93.83% (+1.96 pp)
-
-Occlusion:
-89.14% → 90.74% (+1.60 pp)
-```
-
-These results support using a **mixture of original and augmented samples** rather than relying exclusively on either distribution.
-
----
-
-# Important Limitation
-
-The current experiment uses only:
-
-```text
-seed = 42
-```
-
-Therefore, these numbers represent a **single experimental run**.
-
-Standard deviation cannot be estimated from one seed, which is why the current STD values are `NaN`.
-
-For a more reliable comparison, run multiple seeds, for example:
+예:
 
 ```bash
-python3 augmentation_ablation.py \
-  --model vit \
-  --epochs 10 \
-  --batch-size 128 \
-  --seeds 42 43 44
+--seeds 42 43 44
 ```
 
-Then report:
+이후 결과를 다음과 같이 평균 ± 표준편차 형태로 비교하는 것이 좋다.
 
 ```text
-mean ± std
+Robust Avg = Mean ± STD
 ```
 
-for each metric.
+---
 
-Until multiple-seed experiments are performed, differences such as `+0.12 pp` or `+0.78 pp` should be interpreted as observed differences rather than evidence of statistically significant improvements.
+## ViT와 VLM 결과는 현재 서로 다름
+
+새로운 ViT 실험 결과에서는 기존과 달리 ViT와 VLM 결과가 명확하게 다르게 나타난다.
+
+예를 들어 `augmented_only`의 경우:
+
+```text
+             ViT      VLM
+Clean        98.32    98.02
+Rotation     93.29    90.93
+Occlusion    89.81    91.64
+Robust Avg   94.78    94.22
+```
+
+따라서 이전에 관찰되었던 **ViT/VLM 결과가 완전히 동일한 문제는 새 ViT 실행에서는 나타나지 않는다.**
+
+다만 VLM 결과가 별도 VLM backbone을 실제로 사용해 얻은 결과인지는 코드의 `--model vlm` 분기를 확인해두는 것이 좋다.
+
+---
+
+# 최종 요약
+
+> **이번 CIFAR-10 실험에서는 image augmentation이 CNN, ViT, VLM 모두에서 clean accuracy를 유지하거나 개선하면서 corruption robustness를 향상시켰다.**
+>
+> **CNN에서 augmentation 효과가 가장 컸으며**, Robust Avg가 **84.78%에서 92.11%로 +7.33%p** 증가했다. 특히 occlusion 성능은 **68.65%에서 87.17%로 +18.52%p** 개선되었다.
+>
+> **ViT에서는 augmentation 적용 시 Robust Avg가 93.86%에서 94.78%로 증가했고, mixed training에서는 95.18%까지 증가했다.** 또한 mixed가 clean, rotation, occlusion, low contrast, dark를 포함한 모든 metric에서 가장 높은 결과를 기록했다.
+>
+> **VLM에서도 augmentation을 통해 Robust Avg가 93.34%에서 94.22%로 개선되었다.**
+>
+> 전체적으로 ViT/VLM은 augmentation 없이도 CNN보다 높은 baseline robustness를 보였으며, CNN은 augmentation을 통해 그 격차를 크게 줄였다. 또한 augmentation regime의 최적 선택은 모델별로 달랐으며, CNN/VLM에서는 augmented-only가, ViT에서는 mixed가 가장 높은 Robust Avg를 기록했다.
+>
+> 다만 현재 모든 실험이 **seed=42 하나만 사용**했기 때문에 0.x%p 수준의 작은 차이는 통계적으로 확정하기 어렵다. 최소 3개 이상의 seed를 사용해 평균과 표준편차를 함께 비교하는 추가 실험이 필요하다.
